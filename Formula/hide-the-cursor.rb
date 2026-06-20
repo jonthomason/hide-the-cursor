@@ -12,8 +12,8 @@ class HideTheCursor < Formula
   license "BSD-2-Clause"
   head "https://github.com/jonthomason/hide-the-cursor.git", branch: "main"
 
-  depends_on :macos
   depends_on xcode: ["14.0", :build]
+  depends_on :macos
 
   def install
     # --disable-sandbox: Homebrew's build sandbox blocks SwiftPM's caches.
