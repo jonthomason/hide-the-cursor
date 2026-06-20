@@ -17,15 +17,15 @@ brew tap jonthomason/hide-the-cursor https://github.com/jonthomason/hide-the-cur
 brew install hide-the-cursor
 ```
 
-**2. List the apps to hide the cursor in.** Create `~/.config/hide-the-cursor/config`,
-one app per line (the name as it appears in your Applications folder):
+**2. List the apps that need it** — the ones that don't hide the cursor on their own,
+like Warp and cmux. Create `~/.config/hide-the-cursor/config`, one app per line (the
+name as it appears in your Applications folder):
 
 ```sh
 mkdir -p ~/.config/hide-the-cursor
 cat > ~/.config/hide-the-cursor/config <<'EOF'
 Warp
-iTerm
-Ghostty
+cmux
 EOF
 ```
 
@@ -84,7 +84,7 @@ so a stationary pointer sits on your text. This fills that gap.
 
 ```
 Warp
-iTerm
+cmux
 # mode except   # invert: hide everywhere EXCEPT these
 # verbose       # log each key press
 ```
