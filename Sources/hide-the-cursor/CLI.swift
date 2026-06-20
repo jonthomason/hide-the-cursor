@@ -8,19 +8,23 @@ public struct RunOptions: Equatable {
     public var verbose: Bool
     public var configPath: String?
     public var noConfig: Bool
+    /// Self-test: hide the cursor once, immediately, instead of watching keys.
+    public var once: Bool
 
     public init(
         only: [String] = [],
         except: [String] = [],
         verbose: Bool = false,
         configPath: String? = nil,
-        noConfig: Bool = false
+        noConfig: Bool = false,
+        once: Bool = false
     ) {
         self.only = only
         self.except = except
         self.verbose = verbose
         self.configPath = configPath
         self.noConfig = noConfig
+        self.once = once
     }
 }
 
@@ -94,6 +98,7 @@ public enum CLI {
         var verbose = false
         var configPath: String?
         var noConfig = false
+        var once = false
         var index = 0
         while index < arguments.count {
             let arg = arguments[index]
@@ -106,6 +111,9 @@ public enum CLI {
                 configPath = try value(after: &index, in: arguments, flag: "--config")
             case "--no-config":
                 noConfig = true
+                index += 1
+            case "--once":
+                once = true
                 index += 1
             case "--verbose", "--debug":
                 verbose = true
@@ -133,7 +141,7 @@ public enum CLI {
         }
         return .run(RunOptions(
             only: only, except: except, verbose: verbose,
-            configPath: configPath, noConfig: noConfig))
+            configPath: configPath, noConfig: noConfig, once: once))
     }
 
     /// Read the value that follows a `--flag` and advance the cursor past both.

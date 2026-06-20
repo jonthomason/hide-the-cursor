@@ -63,6 +63,13 @@ No config file means "all apps". To invert the list (hide everywhere *except* th
 listed apps), put `mode except` on its own line. See the README's
 [config file](README.md#the-config-file) section for the full format.
 
+Instead of a full restart, you can reload the config in place by sending the daemon
+`SIGHUP`:
+
+```sh
+pkill -HUP -f hide-the-cursor
+```
+
 You can also bake a fixed scope into the formula's service args instead
 (`run [..., "--only", "Warp"]`), but the config file is preferred — it survives
 upgrades and doesn't need a `brew reinstall`.

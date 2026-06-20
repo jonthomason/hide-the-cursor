@@ -80,6 +80,19 @@ final class CLITests: XCTestCase {
             .run(RunOptions(verbose: true)))
     }
 
+    func testRunWithOnce() throws {
+        XCTAssertEqual(try CLI.parse(["run", "--once"]), .run(RunOptions(once: true)))
+    }
+
+    func testRunWithConfigPathAndNoConfig() throws {
+        XCTAssertEqual(
+            try CLI.parse(["run", "--config", "/tmp/c"]),
+            .run(RunOptions(configPath: "/tmp/c")))
+        XCTAssertEqual(
+            try CLI.parse(["run", "--no-config"]),
+            .run(RunOptions(noConfig: true)))
+    }
+
     func testRunMissingOnlyValueThrows() {
         XCTAssertThrowsError(try CLI.parse(["run", "--only"])) { error in
             XCTAssertEqual(error as? CLIError, .missingValue("--only"))

@@ -10,8 +10,11 @@ import Foundation
 /// `NSCursor.setHiddenUntilMouseMoves(true)`, which is idempotent-ish and lets
 /// macOS reveal the cursor again on the next mouse movement.
 public final class EventTapManager {
-    private let filter: ResolvedFilter
-    private let verbose: Bool
+    // Mutable so the filter can be swapped on a config reload (SIGHUP). Only ever
+    // touched on the main thread (both the keyDown callback and the reload run
+    // there), so no locking is needed.
+    private var filter: ResolvedFilter
+    private var verbose: Bool
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var keyDownCount = 0
@@ -20,6 +23,13 @@ public final class EventTapManager {
     ///   - filter: which frontmost apps to act on.
     ///   - verbose: log each keyDown (frontmost app, match, cursor visibility).
     public init(filter: ResolvedFilter, verbose: Bool = false) {
+        self.filter = filter
+        self.verbose = verbose
+    }
+
+    /// Swap the active filter (and verbosity) — used when the config is reloaded.
+    /// Must be called on the main thread.
+    public func update(filter: ResolvedFilter, verbose: Bool) {
         self.filter = filter
         self.verbose = verbose
     }
@@ -78,15 +88,19 @@ public final class EventTapManager {
         switch type {
         case .keyDown:
             keyDownCount += 1
-            let (name, bundleID) = ActiveApp.frontmost()
-            let matched = filter.allows(bundleID: bundleID, name: name)
+            // In "all apps" mode the frontmost app is irrelevant, so skip the
+            // lookup entirely — the hot path becomes a single AppKit call. (We
+            // still look it up under --verbose so the log stays useful.)
+            let app: (name: String?, bundleID: String?) =
+                (filter.mode != .all || verbose) ? ActiveApp.frontmost() : (nil, nil)
+            let matched = filter.allows(bundleID: app.bundleID, name: app.name)
             if matched {
                 NSCursor.setHiddenUntilMouseMoves(true)
             }
             if verbose {
                 let visibility = BackgroundCursor.cursorIsVisible().map { "\($0)" } ?? "unknown"
                 Log.debug("keyDown #\(keyDownCount) "
-                    + "frontmost=\(name ?? "(none)")/\(bundleID ?? "(none)") "
+                    + "frontmost=\(app.name ?? "(none)")/\(app.bundleID ?? "(none)") "
                     + "matched=\(matched) cursorVisibleAfter=\(visibility)")
             }
         case .tapDisabledByTimeout, .tapDisabledByUserInput:

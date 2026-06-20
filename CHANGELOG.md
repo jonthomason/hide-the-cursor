@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-06-20
+
+### Added
+- `run --once`: a self-test that hides the cursor immediately and reports whether it
+  took effect, so you can verify the tool without typing.
+- **SIGHUP reloads the config file in place** — edit `~/.config/hide-the-cursor/config`
+  and `pkill -HUP -f hide-the-cursor` instead of restarting the service.
+
+### Changed
+- In "all apps" mode the per-key-press hot path no longer looks up the frontmost app
+  (it's irrelevant there) — a touch less work per keystroke.
+
 ## [0.2.1] - 2026-06-20
 
 ### Changed
@@ -44,6 +56,7 @@ First public release.
 - Clean shutdown on SIGINT/SIGTERM.
 - Homebrew formula with a `brew services` definition.
 
+[0.3.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.3.0
 [0.2.1]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.2.1
 [0.2.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.2.0
 [0.1.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.1.0

@@ -5,7 +5,7 @@ import Foundation
 /// Executes a parsed `Command`. Returns the process exit code (the `run` case
 /// blocks in CFRunLoopRun until a signal arrives).
 public enum Runner {
-    public static let version = "0.2.1"
+    public static let version = "0.3.0"
 
     public static func run(_ command: Command) -> Int32 {
         switch command {
@@ -22,7 +22,7 @@ public enum Runner {
         case .doctor:
             return PermissionDoctor.run()
         case .run(let options):
-            return runLoop(options)
+            return options.once ? runOnce() : runLoop(options)
         }
     }
 
@@ -35,8 +35,8 @@ public enum Runner {
           hide-the-cursor <command>
 
         COMMANDS:
-          run [--only <app> ...] [--except <app> ...] [--verbose]
-              [--config <path>] [--no-config]
+          run [--only <app> ...] [--except <app> ...]
+              [--config <path>] [--no-config] [--once] [--verbose]
                                   Hide the cursor on every key press.
                                   --only:   act only for these apps.
                                   --except: act for all apps but these.
@@ -45,7 +45,9 @@ public enum Runner {
                                   are mutually exclusive. With no filter, acts
                                   for all apps.
                                   Reads ~/.config/hide-the-cursor/config if
-                                  present (--only/--except override it).
+                                  present (--only/--except override it); send
+                                  SIGHUP to reload it without restarting.
+                                  --once: hide the cursor once now (self-test).
           list-app                Print the frontmost app's name and bundle id.
           resolve <app> ...       Show the bundle id each app name resolves to.
           doctor                  Check permissions and that the tap can be made.
@@ -56,8 +58,8 @@ public enum Runner {
           hide-the-cursor list-app
           hide-the-cursor run
           hide-the-cursor run --only Warp
-          hide-the-cursor run --only Warp --only iTerm
           hide-the-cursor run --except "Visual Studio Code"
+          hide-the-cursor run --once
           hide-the-cursor resolve Warp iTerm
         """)
     }
@@ -97,19 +99,7 @@ public enum Runner {
                 + "the cursor may only hide while this process is frontmost")
         }
 
-        // Load config (unless disabled), then merge command-line options over it.
-        var config = ConfigSettings.empty
-        var loadedConfigPath: String?
-        if !options.noConfig {
-            let path = options.configPath ?? ConfigFile.defaultPath()
-            if let loaded = ConfigFile.load(path: path) {
-                config = loaded
-                loadedConfigPath = path
-            } else if let explicit = options.configPath {
-                Log.warn("config file not found at \(explicit)")
-            }
-        }
-
+        let (config, loadedConfigPath) = loadConfig(options)
         let effective = SettingsResolver.resolve(options: options, config: config)
         let verbose = effective.verbose
         let (filter, summary) = buildFilter(mode: effective.mode, rawTokens: effective.apps)
@@ -123,13 +113,22 @@ public enum Runner {
         }
 
         activeManager = manager
+        // SIGHUP re-reads the config file and swaps the filter, no restart needed.
+        reloadConfig = {
+            let (newConfig, _) = loadConfig(options)
+            let merged = SettingsResolver.resolve(options: options, config: newConfig)
+            let (newFilter, newSummary) = buildFilter(mode: merged.mode, rawTokens: merged.apps)
+            manager.update(filter: newFilter, verbose: merged.verbose)
+            print("hide-the-cursor: reloaded config — now hiding the cursor while typing in "
+                + "\(newSummary).")
+        }
         installSignalHandlers()
 
         if let loadedConfigPath {
             print("hide-the-cursor: loaded config from \(loadedConfigPath)")
         }
         print("hide-the-cursor: hiding the cursor while typing in \(summary). "
-            + "Press Ctrl-C to stop.")
+            + "Press Ctrl-C to stop (SIGHUP reloads the config).")
         if verbose {
             Log.debug("verbose mode on; backgroundCursorControl=\(backgroundCursorEnabled); "
                 + "activationPolicy=accessory")
@@ -137,6 +136,63 @@ public enum Runner {
 
         CFRunLoopRun()
         return 0
+    }
+
+    /// `run --once`: hide the cursor right now and report whether it took effect,
+    /// so the tool can be verified without typing. Waits for the cursor to reappear
+    /// (you moving the mouse) or a short timeout, then exits.
+    private static func runOnce() -> Int32 {
+        NSApplication.shared.setActivationPolicy(.accessory)
+        if !BackgroundCursor.enable() {
+            Log.warn("could not enable background cursor control; "
+                + "the cursor may only hide while this process is frontmost")
+        }
+
+        NSCursor.setHiddenUntilMouseMoves(true)
+        // Let the window server settle, then check whether it actually hid.
+        CFRunLoopRunInMode(.defaultMode, 0.2, true)
+
+        let canDetect: Bool
+        switch BackgroundCursor.cursorIsVisible() {
+        case .some(false):
+            print("hide-the-cursor: cursor hidden ✅  Move the mouse to reveal it…")
+            canDetect = true
+        case .some(true):
+            print("hide-the-cursor: the cursor did NOT hide. Run `hide-the-cursor doctor` "
+                + "and check Accessibility permission.")
+            return 1
+        case .none:
+            print("hide-the-cursor: hide requested (cursor visibility isn't reportable on "
+                + "this macOS). Move the mouse; it should reveal.")
+            canDetect = false
+        }
+
+        let timeout = canDetect ? 30.0 : 3.0
+        var waited = 0.0
+        while waited < timeout {
+            CFRunLoopRunInMode(.defaultMode, 0.1, true)
+            waited += 0.1
+            if canDetect, BackgroundCursor.cursorIsVisible() == true {
+                print("hide-the-cursor: cursor revealed on mouse movement — working as "
+                    + "expected. ✅")
+                return 0
+            }
+        }
+        print("hide-the-cursor: done.")
+        return 0
+    }
+
+    /// Load the config file for these options. Returns the (possibly empty) settings
+    /// and the path it loaded from (nil if none was loaded).
+    private static func loadConfig(_ options: RunOptions) -> (ConfigSettings, String?) {
+        guard !options.noConfig else { return (.empty, nil) }
+        let path = options.configPath ?? ConfigFile.defaultPath()
+        if let loaded = ConfigFile.load(path: path) {
+            return (loaded, path)
+        } else if let explicit = options.configPath {
+            Log.warn("config file not found at \(explicit)")
+        }
+        return (.empty, nil)
     }
 
     /// Resolve a mode + raw app tokens into a runtime filter and a human-readable
@@ -173,6 +229,7 @@ public enum Runner {
 
 // Held for the lifetime of the process while `run` is active.
 private var activeManager: EventTapManager?
+private var reloadConfig: (() -> Void)?
 private var signalSources: [DispatchSourceSignal] = []
 
 private func installSignalHandlers() {
@@ -188,4 +245,11 @@ private func installSignalHandlers() {
         source.resume()
         signalSources.append(source)
     }
+
+    // SIGHUP reloads the config file in place (no restart).
+    signal(SIGHUP, SIG_IGN)
+    let hangup = DispatchSource.makeSignalSource(signal: SIGHUP, queue: .main)
+    hangup.setEventHandler { reloadConfig?() }
+    hangup.resume()
+    signalSources.append(hangup)
 }

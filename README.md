@@ -70,7 +70,8 @@ brew services list | grep hide-the-cursor
 event tap are healthy, run `hide-the-cursor doctor`.
 
 **Change which apps it covers:** edit `~/.config/hide-the-cursor/config`, then
-`brew services restart hide-the-cursor`.
+`brew services restart hide-the-cursor` (or `pkill -HUP -f hide-the-cursor` to reload
+in place).
 
 ## Why it exists
 
@@ -90,7 +91,8 @@ cmux
 ```
 
 `--config <path>` points elsewhere, `--no-config` ignores it, and `--only`/`--except`
-override it.
+override it. Send the running daemon `SIGHUP` (`pkill -HUP -f hide-the-cursor`) to
+reload the file without restarting.
 
 ## Commands
 
@@ -99,6 +101,7 @@ override it.
 | `run [--only <app> …]` | Hide the cursor, only for these apps. |
 | `run [--except <app> …]` | Hide the cursor for all apps except these. |
 | `run … --verbose` | Log each key press, for debugging. |
+| `run --once` | Hide the cursor once now, as a self-test (no typing needed). |
 | `list-app` | Print the frontmost app's name and bundle id. |
 | `resolve <app> …` | Show the bundle id an app name resolves to. |
 | `doctor` | Check permissions and the event tap. |
@@ -122,7 +125,9 @@ control so the hide actually takes effect.
 
 The event tap needs Accessibility (and sometimes Input Monitoring) permission for the
 **launching** process — your terminal when run directly, or the binary itself when run
-as a service ([Quick start](#quick-start) step 4). `hide-the-cursor doctor` checks it.
+as a service ([Quick start](#quick-start) step 4). `hide-the-cursor doctor` checks it,
+and `hide-the-cursor run --once` hides the cursor immediately so you can confirm it
+works without typing.
 
 If the cursor won't hide, run `hide-the-cursor run --only Warp --verbose` and read the
 per-keypress log:
