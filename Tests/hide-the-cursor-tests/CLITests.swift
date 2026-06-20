@@ -1,5 +1,5 @@
 import XCTest
-@testable import HideTheCursor
+@testable import hide_the_cursor
 
 final class CLITests: XCTestCase {
     func testNoArgumentsIsHelp() throws {

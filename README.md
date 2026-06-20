@@ -144,13 +144,10 @@ swift test
 ## Project layout
 
 ```
-Sources/HideTheCursor/      library: parsing, filter, resolver, event tap, …
-Sources/hide-the-cursor/    thin executable entry point
-Tests/HideTheCursorTests/   unit tests
-Formula/hide-the-cursor.rb  Homebrew formula
+Sources/hide-the-cursor/     all the Swift sources (CLI, filter, resolver, event tap, main)
+Tests/hide-the-cursor-tests/ unit tests
+Formula/hide-the-cursor.rb   Homebrew formula
 ```
-
-Core logic lives in the library target so it can be unit-tested.
 
 ## Contributing & license
 

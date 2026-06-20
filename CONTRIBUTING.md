@@ -18,9 +18,9 @@ Requires macOS and a Swift toolchain (Xcode or the standalone toolchain).
 - **No third-party dependencies.** The argument parser is hand-rolled on purpose.
 - **Don't consume or modify key events.** The event tap stays listen-only and returns
   every event unchanged.
-- **Keep parsing pure and tested.** Argument and filter logic live in the
-  `HideTheCursor` library target with unit tests; the executable target is a thin
-  wrapper. Add tests for new flags and matching behavior.
+- **Keep parsing pure and tested.** Argument, config, and filter logic are unit-tested
+  (the tests use `@testable import hide_the_cursor`). Add tests for new flags and
+  matching behavior.
 - **Match the surrounding style.** Small types, clear names, comments only where the
   *why* isn't obvious.
 

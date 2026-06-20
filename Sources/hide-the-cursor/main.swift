@@ -1,5 +1,4 @@
 import Foundation
-import HideTheCursor
 
 // Line-buffer stdout so logs flush promptly when redirected to a file
 // (e.g. running under `brew services`, where stdout is not a TTY).

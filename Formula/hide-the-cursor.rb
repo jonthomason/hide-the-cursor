@@ -4,6 +4,8 @@
 #   brew tap jonthomason/hide-the-cursor https://github.com/jonthomason/hide-the-cursor
 #   brew install hide-the-cursor
 #   brew services start hide-the-cursor
+#
+# Class name must be the CamelCase of the file name — Homebrew requires this.
 class HideTheCursor < Formula
   desc "Hide the macOS mouse cursor while typing"
   homepage "https://github.com/jonthomason/hide-the-cursor"

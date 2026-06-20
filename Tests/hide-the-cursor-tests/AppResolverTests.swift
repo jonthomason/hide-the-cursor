@@ -1,5 +1,5 @@
 import XCTest
-@testable import HideTheCursor
+@testable import hide_the_cursor
 
 /// These touch LaunchServices / the filesystem, so they assert against Terminal,
 /// which ships with every macOS install at a stable location.
