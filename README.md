@@ -2,11 +2,80 @@
 
 [![CI](https://github.com/jonthomason/hide-the-cursor/actions/workflows/ci.yml/badge.svg)](https://github.com/jonthomason/hide-the-cursor/actions/workflows/ci.yml)
 
-A tiny macOS command-line utility that **hides the mouse pointer while you type** and
-lets macOS reveal it again automatically as soon as you move the mouse.
+A tiny macOS utility that **hides the mouse pointer while you type** and lets macOS
+reveal it again as soon as you move the mouse — for the terminals (Warp, cmux, …) that
+don't do it themselves.
 
-No menu bar app, no UI, no app bundle — just a CLI you run, or run as a background
-service via `brew services`.
+## Quick start
+
+Run it as an always-on background service with `brew services`. This section is all you
+need.
+
+**1. Install**
+
+```sh
+brew tap jonthomason/hide-the-cursor https://github.com/jonthomason/hide-the-cursor
+brew install hide-the-cursor
+```
+
+**2. List the apps to hide the cursor in.** Create `~/.config/hide-the-cursor/config`,
+one app per line (the name as it appears in your Applications folder):
+
+```sh
+mkdir -p ~/.config/hide-the-cursor
+cat > ~/.config/hide-the-cursor/config <<'EOF'
+Warp
+iTerm
+Ghostty
+EOF
+```
+
+App names, `.app` filenames, and bundle ids all work. (Skip this file to hide the
+cursor in *every* app instead.)
+
+**3. Start it** — now, and automatically at every login:
+
+```sh
+brew services start hide-the-cursor
+```
+
+**4. Grant permission, once.** macOS requires the service to have Accessibility access.
+Open **System Settings → Privacy & Security → Accessibility**, find **hide-the-cursor**
+and switch it on. If it isn't listed, click **+**, press **⌘⇧G**, and paste this, then
+enable it:
+
+```
+/opt/homebrew/opt/hide-the-cursor/bin/hide-the-cursor
+```
+
+Then apply it:
+
+```sh
+brew services restart hide-the-cursor
+```
+
+(Path shown is for Apple-silicon Macs; on Intel it's under `/usr/local`. Print yours
+with `echo "$(brew --prefix)/opt/hide-the-cursor/bin/hide-the-cursor"`.)
+
+**5. Use it.** Put the pointer over your terminal text and type — the cursor
+disappears; move the mouse and it's back.
+
+**Check that it's running:**
+
+```sh
+brew services list | grep hide-the-cursor
+# hide-the-cursor   started   <you>   ~/Library/LaunchAgents/homebrew.mxcl.hide-the-cursor.plist
+```
+
+`started` means it's active and will relaunch at login. To confirm permissions and the
+event tap are healthy, run `hide-the-cursor doctor`.
+
+**Change which apps it covers:** edit `~/.config/hide-the-cursor/config`, then
+`brew services restart hide-the-cursor`.
+
+---
+
+*Everything below is reference detail — the quick start above is all most people need.*
 
 ## Why it exists
 
@@ -15,45 +84,32 @@ Some terminals — notably **Warp** and **cmux** — don't, so a stationary poin
 on top of your text while you type. This tool fills that gap, system-wide or for a
 chosen set of apps.
 
-## Install
+## The config file
 
-From this repo's Homebrew tap:
+`hide-the-cursor run` reads `~/.config/hide-the-cursor/config` if it exists. One
+directive per line; blank lines and `#` comments are ignored:
 
-```sh
-brew tap jonthomason/hide-the-cursor https://github.com/jonthomason/hide-the-cursor
-brew install hide-the-cursor
+```
+# Apps to act on — name, .app filename, or bundle id, one per line.
+# With apps listed and no "mode", they're an allowlist (only these).
+Warp
+iTerm
+
+# mode except   # invert: hide everywhere EXCEPT the apps listed
+# verbose       # log each key press
 ```
 
-Or track the latest `main`:
+Use `--config <path>` to point at a different file, or `--no-config` to ignore it.
+Command-line `--only`/`--except` override whatever the file says.
+
+## Running directly (without the service)
+
+You normally don't need this — the service is the intended way — but the same options
+work on the command line:
 
 ```sh
-brew install --HEAD jonthomason/hide-the-cursor/hide-the-cursor
-```
-
-(See [Building from source](#building-from-source) if you'd rather not use Homebrew.
-A future goal is submission to homebrew-core so a plain `brew install hide-the-cursor`
-works without the tap.)
-
-## Quick start
-
-Hide the cursor while typing in **any** app:
-
-```sh
-hide-the-cursor run
-```
-
-Only for specific apps — give an **app name**, a `.app` filename, or a bundle id;
-they're interchangeable:
-
-```sh
-hide-the-cursor run --only Warp
+hide-the-cursor run                       # all apps
 hide-the-cursor run --only Warp --only iTerm
-hide-the-cursor run --only dev.warp.Warp-Stable
-```
-
-Or everywhere *except* certain apps:
-
-```sh
 hide-the-cursor run --except "Visual Studio Code"
 ```
 
@@ -133,17 +189,11 @@ After granting permission, restart the command (or
 hide-the-cursor doctor
 ```
 
-## Run it as a background service
+## Service details
 
-The intended way to run this day-to-day is as a Homebrew service so it starts at
-login and stays alive:
-
-```sh
-brew services start hide-the-cursor
-```
-
-See [HOMEBREW.md](HOMEBREW.md) for the service definition, how to scope it to specific
-apps, and the one extra permission step the service needs.
+The [Quick start](#quick-start) covers day-to-day service use. For the service
+definition, log file locations, and managing it (`brew services list/restart/stop`),
+see [HOMEBREW.md](HOMEBREW.md).
 
 ## Troubleshooting
 

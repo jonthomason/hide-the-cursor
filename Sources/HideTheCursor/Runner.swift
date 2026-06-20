@@ -5,7 +5,7 @@ import Foundation
 /// Executes a parsed `Command`. Returns the process exit code (the `run` case
 /// blocks in CFRunLoopRun until a signal arrives).
 public enum Runner {
-    public static let version = "0.1.0"
+    public static let version = "0.2.0"
 
     public static func run(_ command: Command) -> Int32 {
         switch command {
@@ -36,6 +36,7 @@ public enum Runner {
 
         COMMANDS:
           run [--only <app> ...] [--except <app> ...] [--verbose]
+              [--config <path>] [--no-config]
                                   Hide the cursor on every key press.
                                   --only:   act only for these apps.
                                   --except: act for all apps but these.
@@ -43,6 +44,8 @@ public enum Runner {
                                   filename, or a bundle id. --only and --except
                                   are mutually exclusive. With no filter, acts
                                   for all apps.
+                                  Reads ~/.config/hide-the-cursor/config if
+                                  present (--only/--except override it).
           list-app                Print the frontmost app's name and bundle id.
           resolve <app> ...       Show the bundle id each app name resolves to.
           doctor                  Check permissions and that the tap can be made.
@@ -94,9 +97,37 @@ public enum Runner {
                 + "the cursor may only hide while this process is frontmost")
         }
 
-        let (filter, summary) = buildFilter(options)
+        // Load config (unless disabled), then let CLI flags override it.
+        var config = ConfigSettings.empty
+        var loadedConfigPath: String?
+        if !options.noConfig {
+            let path = options.configPath ?? ConfigFile.defaultPath()
+            if let loaded = ConfigFile.load(path: path) {
+                config = loaded
+                loadedConfigPath = path
+            } else if options.configPath != nil {
+                Log.warn("config file not found at \(options.configPath!)")
+            }
+        }
+        let verbose = options.verbose || config.verbose
 
-        let manager = EventTapManager(filter: filter, verbose: options.verbose)
+        // CLI --only/--except win over the config file; otherwise use the config.
+        let mode: FilterMode
+        let rawTokens: [String]
+        if !options.only.isEmpty {
+            mode = .only
+            rawTokens = options.only
+        } else if !options.except.isEmpty {
+            mode = .except
+            rawTokens = options.except
+        } else {
+            mode = config.mode
+            rawTokens = config.apps
+        }
+
+        let (filter, summary) = buildFilter(mode: mode, rawTokens: rawTokens)
+
+        let manager = EventTapManager(filter: filter, verbose: verbose)
         guard manager.start() else {
             FileHandle.standardError.write(
                 Data("hide-the-cursor: could not create the keyboard event tap.\n\n".utf8))
@@ -107,9 +138,12 @@ public enum Runner {
         activeManager = manager
         installSignalHandlers()
 
+        if let loadedConfigPath {
+            print("hide-the-cursor: loaded config from \(loadedConfigPath)")
+        }
         print("hide-the-cursor: hiding the cursor while typing in \(summary). "
             + "Press Ctrl-C to stop.")
-        if options.verbose {
+        if verbose {
             Log.debug("verbose mode on; backgroundCursorControl=\(backgroundCursorEnabled); "
                 + "activationPolicy=accessory")
         }
@@ -118,18 +152,12 @@ public enum Runner {
         return 0
     }
 
-    /// Resolve the run options into a runtime filter and a human-readable summary.
-    /// Logs how each app name resolved (and warns about ones that didn't).
-    private static func buildFilter(_ options: RunOptions) -> (ResolvedFilter, String) {
-        let mode: FilterMode
-        let rawTokens: [String]
-        if !options.only.isEmpty {
-            mode = .only
-            rawTokens = options.only
-        } else if !options.except.isEmpty {
-            mode = .except
-            rawTokens = options.except
-        } else {
+    /// Resolve a mode + raw app tokens into a runtime filter and a human-readable
+    /// summary. Logs how each app name resolved (and warns about ones that didn't).
+    private static func buildFilter(
+        mode: FilterMode, rawTokens: [String]
+    ) -> (ResolvedFilter, String) {
+        guard mode != .all, !rawTokens.isEmpty else {
             return (.all, "all apps")
         }
 

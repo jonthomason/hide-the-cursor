@@ -6,11 +6,21 @@ public struct RunOptions: Equatable {
     public var only: [String]
     public var except: [String]
     public var verbose: Bool
+    public var configPath: String?
+    public var noConfig: Bool
 
-    public init(only: [String] = [], except: [String] = [], verbose: Bool = false) {
+    public init(
+        only: [String] = [],
+        except: [String] = [],
+        verbose: Bool = false,
+        configPath: String? = nil,
+        noConfig: Bool = false
+    ) {
         self.only = only
         self.except = except
         self.verbose = verbose
+        self.configPath = configPath
+        self.noConfig = noConfig
     }
 }
 
@@ -82,6 +92,8 @@ public enum CLI {
         var only: [String] = []
         var except: [String] = []
         var verbose = false
+        var configPath: String?
+        var noConfig = false
         var index = 0
         while index < arguments.count {
             let arg = arguments[index]
@@ -90,6 +102,11 @@ public enum CLI {
                 only.append(try value(after: &index, in: arguments, flag: "--only"))
             case "--except":
                 except.append(try value(after: &index, in: arguments, flag: "--except"))
+            case "--config":
+                configPath = try value(after: &index, in: arguments, flag: "--config")
+            case "--no-config":
+                noConfig = true
+                index += 1
             case "--verbose", "--debug":
                 verbose = true
                 index += 1
@@ -102,6 +119,10 @@ public enum CLI {
                     guard !value.isEmpty else { throw CLIError.missingValue("--except") }
                     except.append(value)
                     index += 1
+                } else if let value = stripPrefix("--config=", from: arg) {
+                    guard !value.isEmpty else { throw CLIError.missingValue("--config") }
+                    configPath = value
+                    index += 1
                 } else {
                     throw CLIError.unexpectedArgument(arg)
                 }
@@ -110,7 +131,9 @@ public enum CLI {
         if !only.isEmpty && !except.isEmpty {
             throw CLIError.conflictingFilters
         }
-        return .run(RunOptions(only: only, except: except, verbose: verbose))
+        return .run(RunOptions(
+            only: only, except: except, verbose: verbose,
+            configPath: configPath, noConfig: noConfig))
     }
 
     /// Read the value that follows a `--flag` and advance the cursor past both.

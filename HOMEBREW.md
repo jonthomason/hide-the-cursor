@@ -51,22 +51,25 @@ end
 
 ## Scoping the service to specific apps
 
-The default service runs `hide-the-cursor run` (all apps). To limit it, add `--only`
-(or `--except`) with app names:
+The service runs `hide-the-cursor run`, which reads `~/.config/hide-the-cursor/config`.
+List the apps there (one per line — name, `.app` filename, or bundle id):
 
-```ruby
-service do
-  run [opt_bin/"hide-the-cursor", "run", "--only", "Warp", "--only", "iTerm"]
-  ...
-end
+```sh
+mkdir -p ~/.config/hide-the-cursor
+cat > ~/.config/hide-the-cursor/config <<'EOF'
+Warp
+iTerm
+EOF
+brew services restart hide-the-cursor
 ```
 
-App names, `.app` filenames, and bundle ids are all accepted. After editing the
-formula in your tap, `brew reinstall hide-the-cursor` and
-`brew services restart hide-the-cursor`.
+No config file means "all apps". To invert the list (hide everywhere *except* the
+listed apps), put `mode except` on its own line. See the README's
+[config file](README.md#the-config-file) section for the full format.
 
-(There's no config file yet — scope lives in the service args. A config file is an
-easy future addition if editing service args proves annoying.)
+You can also bake a fixed scope into the formula's service args instead
+(`run [..., "--only", "Warp"]`), but the config file is preferred — it survives
+upgrades and doesn't need a `brew reinstall`.
 
 ## Managing the service
 
