@@ -8,8 +8,7 @@ don't do it themselves.
 
 ## Quick start
 
-Run it as an always-on background service with `brew services`. This section is all you
-need.
+Run it as an always-on background service with `brew services`.
 
 **1. Install**
 
@@ -73,188 +72,86 @@ event tap are healthy, run `hide-the-cursor doctor`.
 **Change which apps it covers:** edit `~/.config/hide-the-cursor/config`, then
 `brew services restart hide-the-cursor`.
 
----
-
-*Everything below is reference detail — the quick start above is all most people need.*
-
 ## Why it exists
 
-macOS apps get "hide cursor while typing" for free *only if they implement it*.
-Some terminals — notably **Warp** and **cmux** — don't, so a stationary pointer sits
-on top of your text while you type. This tool fills that gap, system-wide or for a
-chosen set of apps.
+Some terminals — notably **Warp** and **cmux** — don't hide the cursor while you type,
+so a stationary pointer sits on your text. This fills that gap.
 
 ## The config file
 
-`hide-the-cursor run` reads `~/.config/hide-the-cursor/config` if it exists. One
-directive per line; blank lines and `#` comments are ignored:
+`run` reads `~/.config/hide-the-cursor/config` if present — one app per line (name,
+`.app` filename, or bundle id), `#` comments ignored:
 
 ```
-# Apps to act on — name, .app filename, or bundle id, one per line.
-# With apps listed and no "mode", they're an allowlist (only these).
 Warp
 iTerm
-
-# mode except   # invert: hide everywhere EXCEPT the apps listed
+# mode except   # invert: hide everywhere EXCEPT these
 # verbose       # log each key press
 ```
 
-Use `--config <path>` to point at a different file, or `--no-config` to ignore it.
-Command-line `--only`/`--except` override whatever the file says.
-
-## Running directly (without the service)
-
-You normally don't need this — the service is the intended way — but the same options
-work on the command line:
-
-```sh
-hide-the-cursor run                       # all apps
-hide-the-cursor run --only Warp --only iTerm
-hide-the-cursor run --except "Visual Studio Code"
-```
-
-Stop it with `Ctrl-C` (or `SIGTERM`); it disables the tap cleanly on the way out.
+`--config <path>` points elsewhere, `--no-config` ignores it, and `--only`/`--except`
+override it.
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
-| `run [--only <app> …]` | Hide the cursor on each key press, only for these apps. |
+| `run [--only <app> …]` | Hide the cursor, only for these apps. |
 | `run [--except <app> …]` | Hide the cursor for all apps except these. |
-| `run … --verbose` | Log each key press (frontmost app, whether it matched, cursor state). |
-| `list-app` | Print the frontmost app's name and bundle id (+ a ready-to-paste `--only`). |
-| `resolve <app> …` | Show the bundle id each app name resolves to. |
-| `doctor` | Check permissions and that the event tap can be created. |
+| `run … --verbose` | Log each key press, for debugging. |
+| `list-app` | Print the frontmost app's name and bundle id. |
+| `resolve <app> …` | Show the bundle id an app name resolves to. |
+| `doctor` | Check permissions and the event tap. |
 | `help`, `version` | The usual. |
 
-`--only` and `--except` are mutually exclusive. `<app>` accepts app names ("Warp"),
-`.app` filenames, or bundle ids — see [App names vs. bundle ids](#app-names-vs-bundle-ids).
-
-## App names vs. bundle ids
-
-You don't need to hunt down bundle ids. `--only`/`--except` accept whichever is
-convenient:
-
-- An **app name** as it appears in `/Applications` — `--only Warp`
-- A **`.app` filename** — `--only "Visual Studio Code"`
-- A **bundle id** — `--only dev.warp.Warp-Stable`
-
-At startup each name is resolved to its bundle id, and at runtime the frontmost app's
-display name is also matched directly. That dual matching transparently handles the
-apps whose filename differs from their display name (e.g. `iTerm.app` shows as
-"iTerm2", `Visual Studio Code.app` shows as "Code") — either spelling works.
-
-Not sure what something resolves to? Ask:
-
-```sh
-$ hide-the-cursor resolve Warp iTerm "Visual Studio Code"
-Warp -> dev.warp.Warp-Stable
-iTerm -> com.googlecode.iterm2
-Visual Studio Code -> com.microsoft.VSCode
-```
-
-Or focus an app and run `hide-the-cursor list-app`.
+`<app>` accepts an app name, `.app` filename, or bundle id. Names are resolved at
+startup and also matched by display name at runtime, so apps whose filename differs
+from their display name (iTerm.app → "iTerm2", Visual Studio Code.app → "Code") work
+either way. Check one with `resolve Warp iTerm`. Running directly works too —
+`hide-the-cursor run --only Warp`, stop with `Ctrl-C`.
 
 ## How it works
 
-- A **listen-only** CoreGraphics event tap observes global `keyDown` events. It never
-  modifies, consumes, or remaps keys — it observes and returns each event unchanged.
-- On each matching key press it calls AppKit's
-  `NSCursor.setHiddenUntilMouseMoves(true)`. macOS does the actual hiding and reveals
-  the cursor on the next mouse movement. The call is idempotent-ish: every key press
-  just re-requests "stay hidden until the mouse moves" — there's no toggle to get out
-  of sync.
-- Because the tool runs in the background (your terminal stays frontmost), it
-  registers as an invisible accessory app and opts into background cursor control via
-  CoreGraphics, so the hide actually takes effect from a non-foreground process.
+A **listen-only** CoreGraphics tap watches global `keyDown` events (never modifying or
+consuming them) and calls `NSCursor.setHiddenUntilMouseMoves(true)` on each matching
+press; macOS hides the cursor and reveals it on the next mouse move. Since the tool
+isn't frontmost, it registers as an accessory app and opts into background cursor
+control so the hide actually takes effect.
 
-## Required macOS permissions
+## Permissions & troubleshooting
 
-The event tap needs permission for the process that **launches** hide-the-cursor:
+The event tap needs Accessibility (and sometimes Input Monitoring) permission for the
+**launching** process — your terminal when run directly, or the binary itself when run
+as a service ([Quick start](#quick-start) step 4). `hide-the-cursor doctor` checks it.
 
-- **System Settings → Privacy & Security → Accessibility**
-- If that isn't enough, also **Privacy & Security → Input Monitoring**
+If the cursor won't hide, run `hide-the-cursor run --only Warp --verbose` and read the
+per-keypress log:
 
-macOS attaches the permission to the launching process, not to this tool:
+- **No `keyDown` lines** → no permission (grant it, above).
+- **`matched=false`** → frontmost isn't your target; check the `frontmost=` value.
+- **`matched=true cursorVisibleAfter=true`** → the hide isn't sticking; `doctor` says
+  if background cursor control failed.
 
-- Running it from a terminal? Grant permission to **that terminal app** (Warp,
-  Terminal, iTerm, …).
-- Running it via `brew services`? Grant permission to the **hide-the-cursor binary**
-  itself (the Homebrew `opt` path).
-
-After granting permission, restart the command (or
-`brew services restart hide-the-cursor`). Check everything at once:
-
-```sh
-hide-the-cursor doctor
-```
-
-## Service details
-
-The [Quick start](#quick-start) covers day-to-day service use. For the service
-definition, log file locations, and managing it (`brew services list/restart/stop`),
-see [HOMEBREW.md](HOMEBREW.md).
-
-## Troubleshooting
-
-If the cursor doesn't hide, run with `--verbose` to see what happens on each key press:
-
-```sh
-hide-the-cursor run --only Warp --verbose
-```
-
-```
-htc-debug: keyDown #1 frontmost=Warp/dev.warp.Warp-Stable matched=true cursorVisibleAfter=false
-```
-
-- **No `keyDown` lines at all** → events aren't reaching the tap. Grant Accessibility
-  (and possibly Input Monitoring) permission; see above.
-- **`matched=false`** → the frontmost app isn't the one you targeted. Check the
-  `frontmost=` value (or run `list-app`) and adjust your `--only`.
-- **`matched=true` but `cursorVisibleAfter=true`** → the hide isn't taking effect.
-  hide-the-cursor enables background cursor control automatically; if it couldn't, it
-  logs a warning on startup and `doctor` reports it.
+For service management and logs, see [HOMEBREW.md](HOMEBREW.md).
 
 ## Building from source
 
-Requires Swift (Xcode or the Swift toolchain).
-
 ```sh
-swift build -c release       # binary at .build/release/hide-the-cursor
-swift test                   # run the unit tests
-.build/release/hide-the-cursor run --only Warp
+swift build -c release   # binary at .build/release/hide-the-cursor
+swift test
 ```
 
 ## Project layout
 
 ```
-Package.swift
-Sources/
-  HideTheCursor/        # library (unit-testable core)
-    CLI.swift           # argument parsing
-    Filter.swift        # all / only / except matching
-    AppResolver.swift   # app name / .app / bundle id -> bundle id
-    ActiveApp.swift     # frontmost app lookup
-    EventTapManager.swift
-    BackgroundCursor.swift  # opt into background cursor control
-    PermissionDoctor.swift
-    Runner.swift        # command dispatch + run loop + signal handling
-    Log.swift
-  hide-the-cursor/
-    main.swift          # thin executable entry point
-Tests/
-  HideTheCursorTests/   # parser, filter, and resolver tests
-Formula/
-  hide-the-cursor.rb    # Homebrew formula
+Sources/HideTheCursor/      library: parsing, filter, resolver, event tap, …
+Sources/hide-the-cursor/    thin executable entry point
+Tests/HideTheCursorTests/   unit tests
+Formula/hide-the-cursor.rb  Homebrew formula
 ```
 
-(The core lives in a library target so it can be unit-tested; the executable is a thin
-wrapper.)
+Core logic lives in the library target so it can be unit-tested.
 
-## Contributing
+## Contributing & license
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
-
-## License
-
-BSD 2-Clause. See [LICENSE](LICENSE).
+See [CONTRIBUTING.md](CONTRIBUTING.md). BSD 2-Clause — see [LICENSE](LICENSE).

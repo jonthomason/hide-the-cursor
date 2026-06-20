@@ -13,10 +13,6 @@ brew tap jonthomason/hide-the-cursor https://github.com/jonthomason/hide-the-cur
 brew install hide-the-cursor
 ```
 
-(Longer term, the goal is acceptance into homebrew-core, after which a plain
-`brew install hide-the-cursor` would work without tapping. Submitting to homebrew-core
-is a separate process from publishing this repo.)
-
 ## The formula
 
 [`Formula/hide-the-cursor.rb`](Formula/hide-the-cursor.rb) builds from source with
