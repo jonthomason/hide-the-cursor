@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-06-20
+
+### Changed
+- Permission docs now lead with **Input Monitoring** (what current macOS requires for
+  the event tap); Accessibility is noted as the older-macOS fallback. Updated the
+  README quick start, `doctor` instructions, HOMEBREW.md, and the formula caveats.
+- Quick start now uses `run --once` as the "check it works" step.
+- `doctor` drops the (misleading on current macOS) "Accessibility trusted" line; the
+  event-tap-creation check remains the source of truth.
+
+### Docs
+- Note that ad-hoc signing means each `brew upgrade` can leave a stale permission
+  entry; remove old ones with the **–** button.
+
 ## [0.3.0] - 2026-06-20
 
 ### Added
@@ -56,6 +70,7 @@ First public release.
 - Clean shutdown on SIGINT/SIGTERM.
 - Homebrew formula with a `brew services` definition.
 
+[0.3.1]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.3.1
 [0.3.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.3.0
 [0.2.1]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.2.1
 [0.2.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.2.0

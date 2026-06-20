@@ -5,7 +5,7 @@ import Foundation
 /// Executes a parsed `Command`. Returns the process exit code (the `run` case
 /// blocks in CFRunLoopRun until a signal arrives).
 public enum Runner {
-    public static let version = "0.3.0"
+    public static let version = "0.3.1"
 
     public static func run(_ command: Command) -> Int32 {
         switch command {

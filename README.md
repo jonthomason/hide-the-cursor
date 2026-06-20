@@ -38,10 +38,10 @@ cursor in *every* app instead.)
 brew services start hide-the-cursor
 ```
 
-**4. Grant permission, once.** macOS requires the service to have Accessibility access.
-Open **System Settings → Privacy & Security → Accessibility**, find **hide-the-cursor**
-and switch it on. If it isn't listed, click **+**, press **⌘⇧G**, and paste this, then
-enable it:
+**4. Grant permission, once.** macOS requires the service to have **Input Monitoring**
+access (older macOS versions use Accessibility instead). Open **System Settings →
+Privacy & Security → Input Monitoring**, find **hide-the-cursor** and switch it on. If
+it isn't listed, click **+**, press **⌘⇧G**, and paste this, then enable it:
 
 ```
 /opt/homebrew/opt/hide-the-cursor/bin/hide-the-cursor
@@ -56,8 +56,10 @@ brew services restart hide-the-cursor
 (Path shown is for Apple-silicon Macs; on Intel it's under `/usr/local`. Print yours
 with `echo "$(brew --prefix)/opt/hide-the-cursor/bin/hide-the-cursor"`.)
 
-**5. Use it.** Put the pointer over your terminal text and type — the cursor
-disappears; move the mouse and it's back.
+**5. Check it works.** Run `hide-the-cursor run --once` — it hides the cursor right
+away and prints `cursor hidden ✅` (move the mouse and it returns), so you can confirm
+the setup without waiting to type. In normal use, just type in your terminal; the
+cursor hides while you do and returns when you move the mouse.
 
 **Check that it's running:**
 
@@ -123,11 +125,11 @@ control so the hide actually takes effect.
 
 ## Permissions & troubleshooting
 
-The event tap needs Accessibility (and sometimes Input Monitoring) permission for the
-**launching** process — your terminal when run directly, or the binary itself when run
-as a service ([Quick start](#quick-start) step 4). `hide-the-cursor doctor` checks it,
-and `hide-the-cursor run --once` hides the cursor immediately so you can confirm it
-works without typing.
+The event tap needs **Input Monitoring** permission (older macOS versions use
+Accessibility) for the **launching** process — your terminal when run directly, or the
+binary itself when run as a service ([Quick start](#quick-start) step 4).
+`hide-the-cursor doctor` checks it, and `hide-the-cursor run --once` hides the cursor
+immediately so you can confirm it works without typing.
 
 If the cursor won't hide, run `hide-the-cursor run --only Warp --verbose` and read the
 per-keypress log:

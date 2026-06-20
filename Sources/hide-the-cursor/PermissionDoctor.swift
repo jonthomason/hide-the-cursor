@@ -1,4 +1,3 @@
-import ApplicationServices
 import CoreGraphics
 import Foundation
 
@@ -9,9 +8,6 @@ public enum PermissionDoctor {
     public static func run() -> Int32 {
         print("hide-the-cursor doctor")
         print("")
-
-        let trusted = AXIsProcessTrusted()
-        print("Accessibility trusted:     \(trusted ? "yes" : "no")")
 
         let backgroundCursor = BackgroundCursor.enable()
         print("Background cursor control:  \(backgroundCursor ? "available ✅" : "unavailable ⚠️")")
@@ -54,11 +50,11 @@ public enum PermissionDoctor {
         Could not create the keyboard event tap. This is almost always a missing
         macOS permission for the process that launches hide-the-cursor.
 
-        1. Open  System Settings → Privacy & Security → Accessibility
+        1. Open  System Settings → Privacy & Security → Input Monitoring
            Enable the app/binary that runs hide-the-cursor.
 
-        2. If it still fails, also enable it under
-           System Settings → Privacy & Security → Input Monitoring
+        2. If it still fails (older macOS versions), also enable it under
+           System Settings → Privacy & Security → Accessibility
 
         3. Quit and reopen that app (or `brew services restart hide-the-cursor`),
            then run `hide-the-cursor doctor` again.

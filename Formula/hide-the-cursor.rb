@@ -9,8 +9,8 @@
 class HideTheCursor < Formula
   desc "Hide the macOS mouse cursor while typing"
   homepage "https://github.com/jonthomason/hide-the-cursor"
-  url "https://github.com/jonthomason/hide-the-cursor/archive/refs/tags/v0.3.0.tar.gz"
-  sha256 "22f2485881b068f3b91c26bde0c356b74b0e423034061ae62b5db0636cc22180"
+  url "https://github.com/jonthomason/hide-the-cursor/archive/refs/tags/v0.3.1.tar.gz"
+  sha256 "REPLACE_WITH_RELEASE_TARBALL_SHA256"
   license "BSD-2-Clause"
   head "https://github.com/jonthomason/hide-the-cursor.git", branch: "main"
 
@@ -38,8 +38,8 @@ class HideTheCursor < Formula
 
         #{opt_bin}/hide-the-cursor
 
-      Add it under System Settings -> Privacy & Security -> Accessibility
-      (and, if needed, Input Monitoring), then:
+      Add it under System Settings -> Privacy & Security -> Input Monitoring
+      (older macOS versions use Accessibility), then:
 
         brew services restart hide-the-cursor
 

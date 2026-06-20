@@ -92,10 +92,10 @@ tail -f "$(brew --prefix)/var/log/hide-the-cursor.err.log"
 
 ## The permission gotcha (read this)
 
-The event tap needs Accessibility / Input Monitoring permission for the process that
-**launches** it. From a terminal, that's the terminal app. But when `brew services`
-launches it, the launching process is **the hide-the-cursor binary itself**, so grant
-permission to:
+The event tap needs **Input Monitoring** permission (older macOS versions use
+Accessibility) for the process that **launches** it. From a terminal, that's the
+terminal app. But when `brew services` launches it, the launching process is **the
+hide-the-cursor binary itself**, so grant permission to:
 
 ```
 $(brew --prefix)/opt/hide-the-cursor/bin/hide-the-cursor
@@ -104,9 +104,9 @@ $(brew --prefix)/opt/hide-the-cursor/bin/hide-the-cursor
 Steps:
 
 1. `brew services start hide-the-cursor`
-2. Open **System Settings → Privacy & Security → Accessibility**.
-3. Add the binary above (use the `opt` path — it's stable across upgrades). If the tap
-   still can't be created, also add it under **Input Monitoring**.
+2. Open **System Settings → Privacy & Security → Input Monitoring**.
+3. Add the binary above (use the `opt` path). If the tap still can't be created on an
+   older macOS, also add it under **Accessibility**.
 4. `brew services restart hide-the-cursor`
 5. Confirm:
 
@@ -115,6 +115,11 @@ Steps:
    ```
 
 If `doctor` reports the tap can be created, the service can hide your cursor.
+
+Note: the binary is ad-hoc signed, so each `brew upgrade` can leave a stale
+`hide-the-cursor` row in the permission list (macOS keys it by the versioned path).
+Remove old ones anytime with the **–** button, and re-grant after upgrading if the
+cursor stops hiding. A Developer ID signature would avoid this — a future option.
 
 ## Local dry run before publishing a release
 
