@@ -8,7 +8,7 @@ class HideTheCursor < Formula
   desc "Hide the macOS mouse cursor while typing"
   homepage "https://github.com/jonthomason/hide-the-cursor"
   url "https://github.com/jonthomason/hide-the-cursor/archive/refs/tags/v0.2.0.tar.gz"
-  sha256 "REPLACE_WITH_RELEASE_TARBALL_SHA256"
+  sha256 "9293c84ac51868754a5b2e4c0926b5973ba06176658dfcd8a102cd784f74c1df"
   license "BSD-2-Clause"
   head "https://github.com/jonthomason/hide-the-cursor.git", branch: "main"
 
