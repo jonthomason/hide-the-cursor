@@ -5,7 +5,7 @@ import Foundation
 /// Executes a parsed `Command`. Returns the process exit code (the `run` case
 /// blocks in CFRunLoopRun until a signal arrives).
 public enum Runner {
-    public static let version = "0.2.0"
+    public static let version = "0.2.1"
 
     public static func run(_ command: Command) -> Int32 {
         switch command {
@@ -97,7 +97,7 @@ public enum Runner {
                 + "the cursor may only hide while this process is frontmost")
         }
 
-        // Load config (unless disabled), then let CLI flags override it.
+        // Load config (unless disabled), then merge command-line options over it.
         var config = ConfigSettings.empty
         var loadedConfigPath: String?
         if !options.noConfig {
@@ -105,27 +105,14 @@ public enum Runner {
             if let loaded = ConfigFile.load(path: path) {
                 config = loaded
                 loadedConfigPath = path
-            } else if options.configPath != nil {
-                Log.warn("config file not found at \(options.configPath!)")
+            } else if let explicit = options.configPath {
+                Log.warn("config file not found at \(explicit)")
             }
         }
-        let verbose = options.verbose || config.verbose
 
-        // CLI --only/--except win over the config file; otherwise use the config.
-        let mode: FilterMode
-        let rawTokens: [String]
-        if !options.only.isEmpty {
-            mode = .only
-            rawTokens = options.only
-        } else if !options.except.isEmpty {
-            mode = .except
-            rawTokens = options.except
-        } else {
-            mode = config.mode
-            rawTokens = config.apps
-        }
-
-        let (filter, summary) = buildFilter(mode: mode, rawTokens: rawTokens)
+        let effective = SettingsResolver.resolve(options: options, config: config)
+        let verbose = effective.verbose
+        let (filter, summary) = buildFilter(mode: effective.mode, rawTokens: effective.apps)
 
         let manager = EventTapManager(filter: filter, verbose: verbose)
         guard manager.start() else {

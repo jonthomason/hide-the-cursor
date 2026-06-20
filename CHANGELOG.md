@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-06-20
+
+### Changed
+- Consolidated the library + executable split into a single `hide-the-cursor` target
+  (`Sources/hide-the-cursor/`); tests in `Tests/hide-the-cursor-tests/`. No behavior
+  change — just a cleaner, single-named source layout.
+- Extracted command-line/config precedence into a pure `SettingsResolver` with unit
+  tests.
+
 ## [0.2.0] - 2026-06-20
 
 ### Added
@@ -35,5 +44,6 @@ First public release.
 - Clean shutdown on SIGINT/SIGTERM.
 - Homebrew formula with a `brew services` definition.
 
+[0.2.1]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.2.1
 [0.2.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.2.0
 [0.1.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.1.0
