@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-06-25
+
+### Added
+- `list` command: prints which apps cursor-hiding is enabled for (resolved to bundle
+  ids), from the config file or from `--only`/`--except`/`--config` flags.
+
 ## [0.3.1] - 2026-06-20
 
 ### Changed
@@ -70,6 +76,7 @@ First public release.
 - Clean shutdown on SIGINT/SIGTERM.
 - Homebrew formula with a `brew services` definition.
 
+[0.4.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.4.0
 [0.3.1]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.3.1
 [0.3.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.3.0
 [0.2.1]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.2.1

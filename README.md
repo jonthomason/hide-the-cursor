@@ -104,6 +104,7 @@ reload the file without restarting.
 | `run [--except <app> …]` | Hide the cursor for all apps except these. |
 | `run … --verbose` | Log each key press, for debugging. |
 | `run --once` | Hide the cursor once now, as a self-test (no typing needed). |
+| `list` | Show which apps cursor-hiding is enabled for (config file or flags). |
 | `list-app` | Print the frontmost app's name and bundle id. |
 | `resolve <app> …` | Show the bundle id an app name resolves to. |
 | `doctor` | Check permissions and the event tap. |

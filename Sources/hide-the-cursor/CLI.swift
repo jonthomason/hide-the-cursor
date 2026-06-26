@@ -31,6 +31,8 @@ public struct RunOptions: Equatable {
 /// A parsed command line. Kept value-typed so it is easy to unit test.
 public enum Command: Equatable {
     case run(RunOptions)
+    /// `list`: show which apps cursor-hiding is configured for.
+    case list(RunOptions)
     case listApp
     case resolve([String])
     case doctor
@@ -73,7 +75,9 @@ public enum CLI {
 
         switch first {
         case "run":
-            return try parseRun(rest)
+            return .run(try parseRunOptions(rest))
+        case "list":
+            return .list(try parseRunOptions(rest))
         case "list-app":
             try requireNoExtraArguments(rest)
             return .listApp
@@ -92,7 +96,7 @@ public enum CLI {
         }
     }
 
-    private static func parseRun(_ arguments: [String]) throws -> Command {
+    private static func parseRunOptions(_ arguments: [String]) throws -> RunOptions {
         var only: [String] = []
         var except: [String] = []
         var verbose = false
@@ -139,9 +143,9 @@ public enum CLI {
         if !only.isEmpty && !except.isEmpty {
             throw CLIError.conflictingFilters
         }
-        return .run(RunOptions(
+        return RunOptions(
             only: only, except: except, verbose: verbose,
-            configPath: configPath, noConfig: noConfig, once: once))
+            configPath: configPath, noConfig: noConfig, once: once)
     }
 
     /// Read the value that follows a `--flag` and advance the cursor past both.

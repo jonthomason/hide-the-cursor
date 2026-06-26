@@ -22,6 +22,16 @@ final class CLITests: XCTestCase {
         XCTAssertEqual(try CLI.parse(["list-app"]), .listApp)
     }
 
+    func testList() throws {
+        XCTAssertEqual(try CLI.parse(["list"]), .list(RunOptions()))
+        XCTAssertEqual(
+            try CLI.parse(["list", "--only", "Warp"]),
+            .list(RunOptions(only: ["Warp"])))
+        XCTAssertEqual(
+            try CLI.parse(["list", "--config", "/tmp/c"]),
+            .list(RunOptions(configPath: "/tmp/c")))
+    }
+
     func testDoctor() throws {
         XCTAssertEqual(try CLI.parse(["doctor"]), .doctor)
     }

@@ -5,7 +5,7 @@ import Foundation
 /// Executes a parsed `Command`. Returns the process exit code (the `run` case
 /// blocks in CFRunLoopRun until a signal arrives).
 public enum Runner {
-    public static let version = "0.3.1"
+    public static let version = "0.4.0"
 
     public static func run(_ command: Command) -> Int32 {
         switch command {
@@ -21,6 +21,8 @@ public enum Runner {
             return resolve(tokens)
         case .doctor:
             return PermissionDoctor.run()
+        case .list(let options):
+            return listApps(options)
         case .run(let options):
             return options.once ? runOnce() : runLoop(options)
         }
@@ -48,6 +50,8 @@ public enum Runner {
                                   present (--only/--except override it); send
                                   SIGHUP to reload it without restarting.
                                   --once: hide the cursor once now (self-test).
+          list                    Show which apps cursor-hiding is enabled for
+                                  (from the config file, or the flags you pass).
           list-app                Print the frontmost app's name and bundle id.
           resolve <app> ...       Show the bundle id each app name resolves to.
           doctor                  Check permissions and that the tap can be made.
@@ -60,6 +64,7 @@ public enum Runner {
           hide-the-cursor run --only Warp
           hide-the-cursor run --except "Visual Studio Code"
           hide-the-cursor run --once
+          hide-the-cursor list
           hide-the-cursor resolve Warp iTerm
         """)
     }
@@ -86,6 +91,41 @@ public enum Runner {
             }
         }
         return allResolved ? 0 : 1
+    }
+
+    /// `list`: print which apps cursor-hiding is configured for, each resolved to
+    /// its bundle id. Reflects the config file (and any --only/--except/--config
+    /// flags), i.e. exactly what `run` would act on.
+    private static func listApps(_ options: RunOptions) -> Int32 {
+        let (config, configPath) = loadConfig(options)
+        let effective = SettingsResolver.resolve(options: options, config: config)
+
+        if effective.mode == .all || effective.apps.isEmpty {
+            print("Enabled for: all apps (no app filter configured).")
+        } else {
+            print(effective.mode == .only
+                ? "Enabled for these apps:"
+                : "Enabled for all apps except:")
+            for app in effective.apps {
+                if let identifier = AppResolver.resolveBundleID(app) {
+                    print(identifier == app ? "  • \(app)" : "  • \(app)  →  \(identifier)")
+                } else {
+                    print("  • \(app)  (not installed?)")
+                }
+            }
+        }
+
+        let source: String
+        if !options.only.isEmpty || !options.except.isEmpty {
+            source = "command-line flags"
+        } else if let configPath {
+            source = configPath
+        } else {
+            source = "no config file (default: \(ConfigFile.defaultPath()))"
+        }
+        print("")
+        print("Source: \(source)")
+        return 0
     }
 
     private static func runLoop(_ options: RunOptions) -> Int32 {

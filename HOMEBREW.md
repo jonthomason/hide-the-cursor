@@ -116,10 +116,17 @@ Steps:
 
 If `doctor` reports the tap can be created, the service can hide your cursor.
 
-Note: the binary is ad-hoc signed, so each `brew upgrade` can leave a stale
-`hide-the-cursor` row in the permission list (macOS keys it by the versioned path).
-Remove old ones anytime with the **–** button, and re-grant after upgrading if the
-cursor stops hiding. A Developer ID signature would avoid this — a future option.
+Note: the binary is ad-hoc signed (no stable code identity), so macOS may re-prompt
+for Input Monitoring — and add another `hide-the-cursor` row — on each upgrade, and
+sometimes on each `brew services restart`. Two things help:
+
+- When you only changed the config, reload in place instead of restarting:
+  `pkill -HUP -f hide-the-cursor`. The running process keeps its permission.
+- Clear stale rows anytime with the **–** button.
+
+The durable fix is signing with a stable certificate (a self-signed cert for a personal
+tap, or an Apple Developer ID for wider distribution), which gives macOS one identity
+to remember.
 
 ## Local dry run before publishing a release
 
