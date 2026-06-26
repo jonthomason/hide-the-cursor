@@ -36,6 +36,16 @@ final class CLITests: XCTestCase {
         XCTAssertEqual(try CLI.parse(["doctor"]), .doctor)
     }
 
+    func testReloadConfig() throws {
+        XCTAssertEqual(try CLI.parse(["reload-config"]), .reloadConfig)
+    }
+
+    func testReloadConfigRejectsExtraArguments() {
+        XCTAssertThrowsError(try CLI.parse(["reload-config", "x"])) { error in
+            XCTAssertEqual(error as? CLIError, .unexpectedArgument("x"))
+        }
+    }
+
     func testResolve() throws {
         XCTAssertEqual(try CLI.parse(["resolve", "Warp"]), .resolve(["Warp"]))
         XCTAssertEqual(try CLI.parse(["resolve", "Warp", "iTerm"]), .resolve(["Warp", "iTerm"]))

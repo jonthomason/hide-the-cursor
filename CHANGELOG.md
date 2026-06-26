@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-06-25
+
+### Added
+- `reload-config` command: tells the running daemon to re-read its config (it sends
+  SIGHUP to the `hide-the-cursor` process), so config edits apply without a
+  `brew services restart` — which avoids macOS re-prompting for Input Monitoring. The
+  daemon's startup line and help now point at this command.
+
+### Changed
+- LICENSE copyright line is no longer personalized (standard BSD 2-Clause).
+
 ## [0.4.0] - 2026-06-25
 
 ### Added
@@ -76,6 +87,7 @@ First public release.
 - Clean shutdown on SIGINT/SIGTERM.
 - Homebrew formula with a `brew services` definition.
 
+[0.5.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.5.0
 [0.4.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.4.0
 [0.3.1]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.3.1
 [0.3.0]: https://github.com/jonthomason/hide-the-cursor/releases/tag/v0.3.0

@@ -63,11 +63,10 @@ No config file means "all apps". To invert the list (hide everywhere *except* th
 listed apps), put `mode except` on its own line. See the README's
 [config file](README.md#the-config-file) section for the full format.
 
-Instead of a full restart, you can reload the config in place by sending the daemon
-`SIGHUP`:
+Instead of a full restart, reload the config in place:
 
 ```sh
-pkill -HUP -f hide-the-cursor
+hide-the-cursor reload-config
 ```
 
 You can also bake a fixed scope into the formula's service args instead
@@ -121,7 +120,7 @@ for Input Monitoring — and add another `hide-the-cursor` row — on each upgra
 sometimes on each `brew services restart`. Two things help:
 
 - When you only changed the config, reload in place instead of restarting:
-  `pkill -HUP -f hide-the-cursor`. The running process keeps its permission.
+  `hide-the-cursor reload-config`. The running process keeps its permission.
 - Clear stale rows anytime with the **–** button.
 
 The durable fix is signing with a stable certificate (a self-signed cert for a personal

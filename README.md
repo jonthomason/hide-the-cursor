@@ -72,8 +72,8 @@ brew services list | grep hide-the-cursor
 event tap are healthy, run `hide-the-cursor doctor`.
 
 **Change which apps it covers:** edit `~/.config/hide-the-cursor/config`, then
-`brew services restart hide-the-cursor` (or `pkill -HUP -f hide-the-cursor` to reload
-in place).
+`hide-the-cursor reload-config` (reloads in place — no restart, so no permission
+re-prompt).
 
 ## Why it exists
 
@@ -93,8 +93,8 @@ cmux
 ```
 
 `--config <path>` points elsewhere, `--no-config` ignores it, and `--only`/`--except`
-override it. Send the running daemon `SIGHUP` (`pkill -HUP -f hide-the-cursor`) to
-reload the file without restarting.
+override it. After editing it, run `hide-the-cursor reload-config` to apply the change
+to a running daemon without restarting it.
 
 ## Commands
 
@@ -105,6 +105,7 @@ reload the file without restarting.
 | `run … --verbose` | Log each key press, for debugging. |
 | `run --once` | Hide the cursor once now, as a self-test (no typing needed). |
 | `list` | Show which apps cursor-hiding is enabled for (config file or flags). |
+| `reload-config` | Tell the running daemon to re-read its config (no restart). |
 | `list-app` | Print the frontmost app's name and bundle id. |
 | `resolve <app> …` | Show the bundle id an app name resolves to. |
 | `doctor` | Check permissions and the event tap. |

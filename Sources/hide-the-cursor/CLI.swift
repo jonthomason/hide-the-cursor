@@ -33,6 +33,8 @@ public enum Command: Equatable {
     case run(RunOptions)
     /// `list`: show which apps cursor-hiding is configured for.
     case list(RunOptions)
+    /// `reload-config`: tell a running daemon to re-read its config (via SIGHUP).
+    case reloadConfig
     case listApp
     case resolve([String])
     case doctor
@@ -78,6 +80,9 @@ public enum CLI {
             return .run(try parseRunOptions(rest))
         case "list":
             return .list(try parseRunOptions(rest))
+        case "reload-config":
+            try requireNoExtraArguments(rest)
+            return .reloadConfig
         case "list-app":
             try requireNoExtraArguments(rest)
             return .listApp
